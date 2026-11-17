@@ -16,8 +16,8 @@ Notation "'Typeₛ'" := Type_sort.
 Notation "'Propₛ'" := Prop_sort.
 
 (** Creates a fresh type according to [s] *)
-Definition stype_of (s : Sort) : Type :=
-  match s with Typeₛ => Type | Propₛ => Prop end.
+Definition stype_of@{u v | v < u} (s : Sort) : Type@{u} :=
+  match s with Typeₛ => Type@{v} | Propₛ => Prop end.
 Arguments stype_of !_ : simpl nomatch.
 
 (** When working with a sort [s], we cannot simply say "we have an
