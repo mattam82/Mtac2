@@ -67,7 +67,7 @@ Notation M := t.
 Definition gtactic (A : Type) := goal -> M (list (A * goal)).
 Notation tactic := (gtactic unit).
 
-Fail Definition exact {A} (x:A) : tactic := fun g =>
+Succeed Definition exact {A} (x:A) : tactic := fun g =>
   match g with
   | Goal g => cumul_or_fail x g;; ret [m:]
   end.

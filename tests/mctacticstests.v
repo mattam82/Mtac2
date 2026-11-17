@@ -189,7 +189,7 @@ Definition testmg :=
 Goal forall b : nat, S b > 0.
 MProof.
   intros b.
-  Fail testmg. (* FIX why? *)
+  Succeed testmg.
   destruct b.
   - simpl. lia.
   - intros n';; simpl;; lia.
@@ -198,7 +198,7 @@ Qed.
 Goal forall a b : nat, S b > 0.
 MProof.
   intros a b.
-  Fail testmg. (* FIX why? *)
+  Succeed testmg.
   destruct b.
   - simpl;; lia.
   - intros n';; simpl;; lia.
@@ -207,7 +207,7 @@ Qed.
 Goal forall a b c : nat, S b > 0.
 MProof.
   intros a b c.
-  Fail testmg.
+  Succeed testmg.
   destruct b.
   - simpl;; lia.
   - intros n';; simpl;; lia.

@@ -1897,14 +1897,18 @@ and primitive ctxt vms mh univs reduced_term =
 
   | MConstr (Mhyps, _) ->
       let sigma, hyps, expected_type =
-        let ulist, uhyp =
+        let uhyp =
           let qs, univs = UVars.Instance.to_array univs in
           match qs, univs with
-          | [||], [|ulist; uhyp|] -> ulist, uhyp
+          | [||], [|_; uhyp|] -> uhyp
           | _ -> failwith ("Expected `M.hyps` to have zero qualities and two universes; found "  ^
                            string_of_int (Array.length qs) ^ " and " ^ string_of_int (Array.length univs))
         in
-        let ulist = EInstance.make (UVars.Instance.of_array ([||], [|ulist|])) in
+        (* The universe of the list is irrelevant in the type of [M.hyps] (an applied [mlist] has
+           the universe of its parameter): it can have been set to [Set] where [M.hyps] is used.
+           The list is built at a fresh universe instead, constrained by the types of the hypotheses. *)
+        let sigma, ulist = Evd.new_univ_level_variable Evd.UnivFlexible sigma in
+        let ulist = EInstance.make (UVars.Instance.of_array ([||], [|Univ.Universe.make ulist|])) in
         let uhyp  = EInstance.make (UVars.Instance.of_array ([||], [|uhyp|])) in
         let sigma, hyps = build_hypotheses ~univ_hyp:uhyp ~univ_list:ulist sigma env in
         let sigma, hyp_ty = UConstrBuilder.build_app ~univs:uhyp Hypotheses.hyp_builder sigma env [||] in
@@ -2182,7 +2186,7 @@ and primitive ctxt vms mh univs reduced_term =
         let uni = to_econstr uni in
         let t_args_uni, t_args_rem = List.chop (List.length c_args) t_args in
 
-        let to_unify = List.combine (c_head :: c_args) (t_head :: t_args_uni) in
+        let to_unify = List.combine c_args t_args_uni in
 
         let rec uni_and_go = function
           | [] ->
@@ -2199,7 +2203,17 @@ and primitive ctxt vms mh univs reduced_term =
                   (* efail (E.mkWrongTerm sigma env c_head) *)
                   (fail[@tailcall]) ()
         in
-        (uni_and_go[@tailcall]) to_unify
+        (* The universes of a global head are compared at the arity at which [t] uses it: e.g.
+           the universe of an applied polymorphic constant can be irrelevant, while the heads
+           alone would have to be equal *)
+        let heads =
+          if isConst sigma c_head || isInd sigma c_head || isConstruct sigma c_head then
+            Evarconv.compare_heads env sigma ~nargs:(List.length t_args) c_head t_head
+          else fst (UnificationStrategy.unify None sigma env uni Conversion.CONV c_head t_head)
+        in
+        (match heads with
+         | Evarsolve.Success _ -> (uni_and_go[@tailcall]) to_unify
+         | Evarsolve.UnifFailure _ -> (fail[@tailcall]) ())
       else
         (fail[@tailcall]) ()
 

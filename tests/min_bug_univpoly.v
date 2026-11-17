@@ -481,7 +481,7 @@ Definition exact {A} (x:A) : tactic := fun g =>
   | _ => raise NotAGoal
   end.
 
-Fail Definition intro_base {A B} (var : string) (t : A -> gtactic B) : gtactic B := fun g =>
+Succeed Definition intro_base {A B} (var : string) (t : A -> gtactic B) : gtactic B := fun g =>
   mmatch g with
   | [? P e] @Goal (forall x:A, P x) e =u>
     @nu nat _ var None (fun x=>
