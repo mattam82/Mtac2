@@ -1170,7 +1170,7 @@ let declare_mind env sigma params sigs mut_constrs =
         match CoqSort.from_coq sigma env t with
         | Prop_sort -> sigma, mkProp
         | Type_sort ->
-            let sigma, univ = Evd.new_univ_level_variable (Evd.UnivFlexible false) sigma in
+            let sigma, univ = Evd.new_univ_level_variable Evd.UnivFlexible sigma in
             sigma, mkType (Univ.Universe.make univ)
       ) in
       let name = CoqString.from_coq (env, sigma) name in
@@ -1259,9 +1259,9 @@ let declare_mind env sigma params sigs mut_constrs =
     | UState.Monomorphic_entry ctx ->
       let () = Global.push_context_set ctx in
       UVars.empty_sort_subst, Entries.Monomorphic_ind_entry
-    | UState.Polymorphic_entry uctx ->
+    | UState.Polymorphic_entry (uctx, _) ->
       let uinst, auctx = UVars.abstract_universes uctx in
-      UVars.make_instance_subst uinst, Entries.Polymorphic_ind_entry auctx
+      UVars.make_instance_subst uinst, Entries.Polymorphic_ind_entry (auctx, None)
   in
   let nf_univs c = CVars.subst_univs_level_constr usubst c in
   let mind_entry_inds = List.map (fun ind ->
@@ -1276,7 +1276,6 @@ let declare_mind env sigma params sigs mut_constrs =
              mind_entry_inds;
              mind_entry_params;
              mind_entry_universes=uctx;
-             mind_entry_variance=None;
              mind_entry_private=None;
             } (univs, UnivNames.empty_binders) [] in
   (sigma, CoqUnit.mkTT)

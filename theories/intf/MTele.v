@@ -19,7 +19,7 @@ Inductive MTele : Type :=
 
 (** MTele_Const : A constant (i.e. binder independent) type-level interpretation
 of MTele. It constructs `∀ x .. z, T`. *)
-Fixpoint MTele_Const {s : Sort} (T : s) (n : MTele) : s :=
+Fixpoint MTele_Const@{u v | u < v} {s : Sort} (T : stype_of@{v u} s) (n : MTele@{u}) : stype_of@{v u} s :=
 match n with
 | mBase => T
 | mTele F => ForAll (fun x => MTele_Const T (F x))
